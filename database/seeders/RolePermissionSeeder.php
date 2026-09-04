@@ -17,7 +17,8 @@ class RolePermissionSeeder extends Seeder
         $permissions = [
             // Users / Staff Management
             'user-add', 'user-view', 'user-update', 'user-delete',
-
+            // departments
+            'department-add', 'department-view', 'department-update', 'department-delete',
             // Doctors
             'doctor-add', 'doctor-view', 'doctor-update', 'doctor-delete',
 
