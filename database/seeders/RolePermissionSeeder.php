@@ -21,7 +21,11 @@ class RolePermissionSeeder extends Seeder
             'department-add', 'department-view', 'department-update', 'department-delete',
             // Doctors
             'doctor-add', 'doctor-view', 'doctor-update', 'doctor-delete',
-
+            // dr schedule
+            'doctor-schedule-view',
+            'doctor-schedule-add',
+            'doctor-schedule-update',
+            'doctor-schedule-delete',
             // Patients
             'patient-add', 'patient-view', 'patient-update', 'patient-delete',
 

@@ -10,4 +10,7 @@ class Department extends Model
         'name',
         'description'
     ];
+    public function doctors(){
+        return $this->hasMany(Doctor::class);
+    }
 }
