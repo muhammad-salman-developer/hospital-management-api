@@ -1,43 +1,58 @@
 <?php
 
-namespace App\Http\Controllers\APi;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DoctorSheduleRequest;
-use App\Models\DoctorSchedule;
+use App\Models\DoctorShedule;
+use Illuminate\Http\Request;
 
-class DoctorScheduleController extends Controller
+class DoctorSheduleController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $shedule = DoctorSchedule::with('doctor')->latest()->paginate(10);
+        $query = DoctorShedule::with('doctor.user');
+
+        if ($request->has('doctor_id')) {
+            $query->where('doctor_id', $request->doctor_id);
+        }
+
+        $schedules = $query->get();
 
         return response()->json([
             'status' => true,
-            'data' => $shedule,
+            'data' => $schedules,
         ], 200);
     }
 
     /**
      * Store a newly created resource in storage.
+     * (Agar doctor_id + day ka record already hai to UPDATE karega, warna NAYA banayega)
      */
     public function store(DoctorSheduleRequest $request)
     {
-        $shedule = DoctorShedule::create([
-            'doctor_id' => $request->doctor_id,
-            'day' => $request->day,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-            'is_available' => $request->is_available ?? true,
-        ]);
+        $validated = $request->validated();
+        $validated['is_available'] = $validated['is_available'] ?? true;
+
+        $schedule = DoctorShedule::updateOrCreate(
+            [
+                'doctor_id' => $validated['doctor_id'],
+                'day' => $validated['day'],
+            ],
+            [
+                'start_time' => $validated['start_time'],
+                'end_time' => $validated['end_time'],
+                'is_available' => $validated['is_available'],
+            ]
+        );
 
         return response()->json([
             'status' => true,
-            'message' => 'Doctor schedule created successfully',
-            'data' => $shedule,
+            'message' => 'Doctor schedule saved successfully',
+            'data' => $schedule->load('doctor'),
         ], 201);
     }
 
@@ -46,11 +61,11 @@ class DoctorScheduleController extends Controller
      */
     public function show(string $id)
     {
-        $shedule = DoctorShedule::findOrFail($id);
+        $schedule = DoctorShedule::with('doctor')->findOrFail($id);
 
         return response()->json([
             'status' => true,
-            'data' => $shedule,
+            'data' => $schedule,
         ], 200);
     }
 
@@ -60,19 +75,17 @@ class DoctorScheduleController extends Controller
     public function update(DoctorSheduleRequest $request, string $id)
     {
         $schedule = DoctorShedule::findOrFail($id);
-        $schedule->update([
-            'doctor_id' => $request->doctor_id,
-            'day' => $request->day,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-            'is_available' => $request->is_available ?? true,
-        ]);
+
+        $validated = $request->validated();
+        $validated['is_available'] = $validated['is_available'] ?? true;
+
+        $schedule->update($validated);
 
         return response()->json([
             'status' => true,
             'message' => 'Doctor schedule updated successfully',
-            'data' => $schedule,
-        ], 201);
+            'data' => $schedule->load('doctor'),
+        ], 200);
     }
 
     /**
@@ -82,6 +95,7 @@ class DoctorScheduleController extends Controller
     {
         $schedule = DoctorShedule::findOrFail($id);
         $schedule->delete();
+
         return response()->json([
             'status' => true,
             'message' => 'Doctor schedule deleted successfully',

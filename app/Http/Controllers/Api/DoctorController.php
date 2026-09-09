@@ -17,11 +17,11 @@ class DoctorController extends Controller
      */
     public function index()
     {
-        $doctors = Doctor::with('department')->latest()->paginate(10);
+        $doctors = Doctor::with(['user', 'department'])->latest()->paginate(10);
 
         return response()->json([
             'status' => true,
-            'doctor' => $doctors,
+            'data' => $doctors,
         ], 200);
     }
 
@@ -63,7 +63,7 @@ class DoctorController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Doctor created successfully!',
-            'doctor' => $doctor->load('user', 'department'),
+            'data' => $doctor->load('user', 'department'),
         ], 201);
     }
 
@@ -76,7 +76,7 @@ class DoctorController extends Controller
 
         return response()->json([
             'status' => true,
-            'doctor' => $doctor,
+            'data' => $doctor,
         ]);
     }
 
@@ -129,7 +129,7 @@ class DoctorController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Doctor updated successfully!',
-            'doctor' => $doctor->fresh()->load('user', 'department'),
+            'data' => $doctor->fresh()->load('user', 'department'),
         ], 200);
     }
 
