@@ -97,6 +97,8 @@ class RolePermissionSeeder extends Seeder
 
         // Patient -> sirf apni cheezein dekhna
         $patient->givePermissionTo([
+            'patient-view',
+            'patient-update',
             'appointment-add', 'appointment-view',
             'lab-report-view',
             'prescription-view',

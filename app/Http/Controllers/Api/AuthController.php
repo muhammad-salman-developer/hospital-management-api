@@ -20,12 +20,12 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
             'phone_number' => $request->phone_number,
         ]);
-
+        $user->sendEmailVerificationNotification();
         $user->assignRole('patient');
 
         return response()->json([
             'status' => true,
-            'message' => 'user register successfully!',
+            'message' => 'User registered successfully! Please check your email to verify your account.',
             'user' => $user,
         ]);
     }
@@ -47,6 +47,14 @@ class AuthController extends Controller
 
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             $authUser = Auth::user();
+            if (! $authUser->hasVerifiedEmail()) {
+                Auth::logout();
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Please verify your email before logging in.',
+                ], 403);
+            }
 
             return response()->json([
                 'status' => true,
@@ -73,6 +81,17 @@ class AuthController extends Controller
             'status' => true,
             'user' => $user,
             'message' => 'user logged out successfully!',
+        ], 200);
+    }
+
+    public function me(Request $request)
+    {
+        $user = $request->user();
+
+        return response()->json([
+            'status' => true,
+            'user' => $user,
+            'role' => $user->getRoleNames()->first(),
         ], 200);
     }
 }
