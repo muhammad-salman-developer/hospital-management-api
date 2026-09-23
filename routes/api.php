@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\DoctorController;
@@ -21,6 +22,14 @@ Route::post('/email/resend', [ResendVerificationController::class, 'resend'])
 Route::get('/email/verify/{id}/{hash}', [VerifyEmailController::class, 'verify'])
     ->middleware(['signed'])
     ->name('verification.verify');
+
+// Public: website par bina login ke doctors/departments/schedules dikhane ke liye
+Route::get('/doctors', [DoctorController::class, 'index']);
+Route::get('/doctors/{doctor}', [DoctorController::class, 'show']);
+Route::get('/departments', [DepartmentController::class, 'index']);
+Route::get('/departments/{department}', [DepartmentController::class, 'show']);
+Route::get('/doctor-shedules', [DoctorSheduleController::class, 'index']);
+
 // Protected routes (sirf logged-in users)
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -33,33 +42,33 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::get('/patient/profile', [PatientController::class, 'myProfile']);
 
     Route::apiResource('departments', DepartmentController::class)
+        ->except(['index', 'show'])
         ->middleware([
-            'index' => 'permission:department-view',
-            'show' => 'permission:department-view',
             'store' => 'permission:department-add',
             'update' => 'permission:department-update',
             'destroy' => 'permission:department-delete',
         ]);
 
     Route::apiResource('doctors', DoctorController::class)
+        ->except(['index', 'show'])
         ->middleware([
-            'index' => 'permission:doctor-view',
-            'show' => 'permission:doctor-view',
             'store' => 'permission:doctor-add',
             'update' => 'permission:doctor-update',
             'destroy' => 'permission:doctor-delete',
         ]);
 
     Route::apiResource('doctor-shedules', DoctorSheduleController::class)
+        ->except(['index'])
         ->middleware([
-            'index' => 'permission:doctor-schedule-view',
             'show' => 'permission:doctor-schedule-view',
             'store' => 'permission:doctor-schedule-add',
             'update' => 'permission:doctor-schedule-update',
             'destroy' => 'permission:doctor-schedule-delete',
         ]);
+
     Route::apiResource('patients', PatientController::class)
         ->middleware([
             'index' => 'permission:patient-view',
@@ -67,6 +76,15 @@ Route::middleware('auth:sanctum')->group(function () {
             'store' => 'permission:patient-add',
             'update' => 'permission:patient-update',
             'destroy' => 'permission:patient-delete',
+        ]);
+
+    Route::apiResource('appointments', AppointmentController::class)
+        ->middleware([
+            'index' => 'permission:appointment-view',
+            'show' => 'permission:appointment-view',
+            'store' => 'permission:appointment-add',
+            'update' => 'permission:appointment-update',
+            'destroy' => 'permission:appointment-delete',
         ]);
 
 });

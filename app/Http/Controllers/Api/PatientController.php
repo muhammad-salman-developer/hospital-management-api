@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PatientRequest;
 use App\Models\Patient;
+use Illuminate\Http\Request;
 
 class PatientController extends Controller
 {
@@ -13,11 +14,11 @@ class PatientController extends Controller
      */
     public function index()
     {
-        $patient = Patient::with('user')->latest()->paginate(10);
+        $patients = Patient::with('user')->latest()->paginate(10);
 
         return response()->json([
             'status' => true,
-            'data' => $patient,
+            'data' => $patients,
         ], 200);
     }
 
@@ -28,21 +29,35 @@ class PatientController extends Controller
     {
         $validated = $request->validated();
 
-        // Sirf apna profile bana sake, ya admin kisi ka bhi bana sake
-        if (! $request->user()->hasRole('admin') && $request->user()->id != $validated['user_id']) {
-            return response()->json([
-                'status' => false,
-                'message' => 'You are not authorized to create this profile.',
-            ], 403);
+        // Agar user_id diya gaya hai (online/registered patient)
+        if (! empty($validated['user_id'])) {
+            // Sirf apna profile bana sake, ya admin kisi ka bhi bana sake
+            if (! $request->user()->hasRole('admin') && $request->user()->id != $validated['user_id']) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'You are not authorized to create this profile.',
+                ], 403);
+            }
+
+            $patient = Patient::updateOrCreate(
+                ['user_id' => $validated['user_id']],
+                $validated
+            );
+        } else {
+            // Walk-in patient (koi user_id nahi) - only admin/reception bana sake
+            if (! $request->user()->hasRole('admin')) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Only admin can add walk-in patients.',
+                ], 403);
+            }
+
+            $patient = Patient::create($validated);
         }
-        $patient = Patient::updateOrCreate(
-            ['user_id' => $validated['user_id']],
-            $validated
-        );
 
         return response()->json([
             'status' => true,
-            'message' => 'Patient profile created successfully',
+            'message' => 'Patient profile saved successfully',
             'data' => $patient->load('user'),
         ], 201);
     }
@@ -50,9 +65,16 @@ class PatientController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
         $patient = Patient::with('user')->findOrFail($id);
+
+        if (! $request->user()->hasRole('admin') && $request->user()->id != $patient->user_id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'You are not authorized to view this profile.',
+            ], 403);
+        }
 
         return response()->json([
             'status' => true,
@@ -66,6 +88,13 @@ class PatientController extends Controller
     public function update(PatientRequest $request, string $id)
     {
         $patient = Patient::findOrFail($id);
+
+        if (! $request->user()->hasRole('admin') && $request->user()->id != $patient->user_id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'You are not authorized to update this profile.',
+            ], 403);
+        }
 
         $patient->update($request->validated());
 
@@ -87,6 +116,16 @@ class PatientController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Patient profile deleted successfully',
+        ], 200);
+    }
+
+    public function myProfile(Request $request)
+    {
+        $patient = Patient::with('user')->where('user_id', $request->user()->id)->first();
+
+        return response()->json([
+            'status' => true,
+            'data' => $patient,
         ], 200);
     }
 }
