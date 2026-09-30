@@ -31,4 +31,9 @@ class Appointment extends Model
     {
         return $this->belongsTo(DoctorShedule::class, 'doctor_shedule_id');
     }
+
+    public function payment()
+    {
+        return $this->hasOne(Payment::class);
+    }
 }

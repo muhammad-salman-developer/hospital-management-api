@@ -72,7 +72,7 @@ class DoctorController extends Controller
      */
     public function show(string $id)
     {
-        $doctor = Doctor::findOrFail($id);
+        $doctor = Doctor::with(['user','department'])->findOrFail($id);
 
         return response()->json([
             'status' => true,
@@ -86,9 +86,7 @@ class DoctorController extends Controller
     public function update(DoctorRequest $request, Doctor $doctor)
     {
         $validated = $request->validated();
-
         DB::transaction(function () use ($validated, $doctor, $request) {
-
             // Step 1: User (name, email) update karo
             $doctor->user->update([
                 'name' => $validated['name'],
@@ -139,7 +137,6 @@ class DoctorController extends Controller
     public function destroy(string $id)
     {
         $doctor = Doctor::findOrFail($id);
-
         DB::transaction(function () use ($doctor) {
             $user = $doctor->user;
             $doctor->delete();

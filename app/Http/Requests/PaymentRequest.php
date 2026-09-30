@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class RegisterRequest extends FormRequest
+class PaymentRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,10 +23,13 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string',
-            'email' => 'required|email|unique:users,email',
-            'phone_number' => 'required|unique:users,phone_number',
-            'password' => 'required|string|min:8|confirmed',
+
+            'appointment_id' => 'required|exists:appointments,id',
+            'patient_id' => 'required|exists:patients,id',
+            'amount' => 'required|numeric|min:0',
+            'status' => 'sometimes|in:paid,refunded,pending',
+            'paid_at' => 'nullable|date',
+            'notes' => 'nullable|string',
 
         ];
     }

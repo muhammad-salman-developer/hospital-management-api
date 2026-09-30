@@ -23,9 +23,9 @@ class AppointmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'doctor_id' => 'required|exists:doctors,id',
-            'patient_id' => 'required|exists:patients,id',
-            'doctor_shedule_id' => 'nullable|exists:doctor_shedules,id',
+            'doctor_id' => 'sometimes|required|exists:doctors,id',
+            'patient_id' => 'sometimes|required|exists:patients,id',
+            'doctor_shedule_id' => 'nullable|exists:doctor_shedule,id',
             'appointment_date' => 'required|date',
             'appointment_time' => 'required',
             'status' => 'sometimes|in:pending,confirmed,cancelled',

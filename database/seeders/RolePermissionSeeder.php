@@ -28,6 +28,7 @@ class RolePermissionSeeder extends Seeder
             'doctor-schedule-delete',
             // Patients
             'patient-add', 'patient-view', 'patient-update', 'patient-delete',
+            'payment-add', 'payment-view', 'payment-update', 'payment-delete',
 
             // Appointments
             'appointment-add', 'appointment-view', 'appointment-update', 'appointment-delete',
@@ -80,6 +81,8 @@ class RolePermissionSeeder extends Seeder
             'patient-add', 'patient-view', 'patient-update',
             'appointment-add', 'appointment-view', 'appointment-update', 'appointment-delete',
             'billing-add', 'billing-view', 'billing-update',
+            'payment-add', 'payment-view', 'payment-update', 'payment-delete',
+
         ]);
 
         // Lab Technician -> sirf lab module
@@ -103,6 +106,7 @@ class RolePermissionSeeder extends Seeder
             'lab-report-view',
             'prescription-view',
             'billing-view',
+            'patient-add'
         ]);
     }
 }

@@ -27,7 +27,9 @@ class PatientController extends Controller
      */
     public function store(PatientRequest $request)
     {
+        
         $validated = $request->validated();
+
 
         // Agar user_id diya gaya hai (online/registered patient)
         if (! empty($validated['user_id'])) {
@@ -39,10 +41,7 @@ class PatientController extends Controller
                 ], 403);
             }
 
-            $patient = Patient::updateOrCreate(
-                ['user_id' => $validated['user_id']],
-                $validated
-            );
+            $patient = Patient::create($validated);
         } else {
             // Walk-in patient (koi user_id nahi) - only admin/reception bana sake
             if (! $request->user()->hasRole('admin')) {
@@ -51,7 +50,10 @@ class PatientController extends Controller
                     'message' => 'Only admin can add walk-in patients.',
                 ], 403);
             }
-
+            // $patient = Patient::updateOrCreate(
+            //     ['user_id' => $validated['user_id']],
+            //     $validated
+            // );
             $patient = Patient::create($validated);
         }
 
@@ -126,6 +128,16 @@ class PatientController extends Controller
         return response()->json([
             'status' => true,
             'data' => $patient,
+        ], 200);
+    }
+
+    public function myPatients(Request $request)
+    {
+        $patients = Patient::where('user_id', $request->user()->id)->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $patients,
         ], 200);
     }
 }
