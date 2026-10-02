@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\EmailVerificationNotificationController;
 use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ResendVerificationController;
+use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\VerifyEmailController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +31,7 @@ Route::get('/doctors/{doctor}', [DoctorController::class, 'show']);
 Route::get('/departments', [DepartmentController::class, 'index']);
 Route::get('/departments/{department}', [DepartmentController::class, 'show']);
 Route::get('/doctor-shedules', [DoctorSheduleController::class, 'index']);
+Route::get('/reviews', [ReviewController::class, 'index']);
 
 // Protected routes (sirf logged-in users)
 Route::middleware('auth:sanctum')->group(function () {
@@ -44,8 +46,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::get('/patient/profile', [PatientController::class, 'myProfile']);
-    Route::middleware('auth:sanctum')->get('/my-patients', [PatientController::class, 'myPatients']);
+    Route::get('/my-appointments', [AppointmentController::class, 'myAppointments']);
 
+    Route::middleware('auth:sanctum')->get('/my-patients', [PatientController::class, 'myPatients']);
     Route::apiResource('departments', DepartmentController::class)
         ->except(['index', 'show'])
         ->middleware([
@@ -128,4 +131,8 @@ Route::middleware('auth:sanctum')->group(function () {
             'update' => 'permission:payment-update',
             'destroy' => 'permission:payment-delete',
         ]);
+
+    Route::post('/reviews', [ReviewController::class, 'store']);
+    Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])
+        ->middleware('permission:review-delete');
 });

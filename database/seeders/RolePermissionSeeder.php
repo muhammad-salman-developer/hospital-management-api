@@ -48,7 +48,7 @@ class RolePermissionSeeder extends Seeder
             'report-view',
 
             // Settings
-            'settings-update',
+            'settings-update','review-delete',
         ];
 
         foreach ($permissions as $permission) {

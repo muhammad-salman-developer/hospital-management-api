@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AppointmentRequest;
 use App\Models\Appointment;
-
+use Illuminate\Http\Request;
 class AppointmentController extends Controller
 {
     /**
@@ -84,6 +84,22 @@ class AppointmentController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Appointment deleted successfully',
+        ], 200);
+    }
+
+    // AppointmentController.php mein
+    public function myAppointments(Request $request)
+    {
+        $appointments = Appointment::with(['doctor.user', 'doctor.department', 'patient', 'review', 'payment'])
+            ->whereHas('patient', function ($query) use ($request) {
+                $query->where('user_id', $request->user()->id);
+            })
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $appointments,
         ], 200);
     }
 }
