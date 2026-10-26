@@ -48,7 +48,8 @@ class RolePermissionSeeder extends Seeder
             'report-view',
 
             // Settings
-            'settings-update','review-delete',
+            'settings-update', 'review-delete',
+            'message-view', 'message-update', 'message-delete',
         ];
 
         foreach ($permissions as $permission) {
@@ -106,7 +107,7 @@ class RolePermissionSeeder extends Seeder
             'lab-report-view',
             'prescription-view',
             'billing-view',
-            'patient-add'
+            'patient-add',
         ]);
     }
 }

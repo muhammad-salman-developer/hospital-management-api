@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PatientRequest;
+use App\Models\Doctor;
 use App\Models\Patient;
 use Illuminate\Http\Request;
 
@@ -14,12 +15,32 @@ class PatientController extends Controller
      */
     public function index()
     {
-        $patients = Patient::with('user')->latest()->paginate(10);
+        // $patients = Patient::with('user')->latest()->paginate(10);
+
+        // return response()->json([
+        //     'status' => true,
+        //     'data' => $patients,
+        // ], 200);
+
+        $user = auth()->user();
+
+        $query = Patient::with('user');
+
+        if ($user->hasRole('doctor')) {
+            $doctor = Doctor::where('user_id', $user->id)->firstOrFail();
+
+            $query->whereHas('appointments', function ($q) use ($doctor) {
+                $q->where('doctor_id', $doctor->id);
+            });
+        }
+
+        $patients = $query->latest()->paginate(10);
 
         return response()->json([
             'status' => true,
             'data' => $patients,
         ], 200);
+
     }
 
     /**
@@ -27,9 +48,8 @@ class PatientController extends Controller
      */
     public function store(PatientRequest $request)
     {
-        
-        $validated = $request->validated();
 
+        $validated = $request->validated();
 
         // Agar user_id diya gaya hai (online/registered patient)
         if (! empty($validated['user_id'])) {
@@ -44,10 +64,10 @@ class PatientController extends Controller
             $patient = Patient::create($validated);
         } else {
             // Walk-in patient (koi user_id nahi) - only admin/reception bana sake
-            if (! $request->user()->hasRole('admin')) {
+            if (! $request->user()->hasRole('admin')&&(!$request->user()->hasRole('receptionist'))) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Only admin can add walk-in patients.',
+                    'message' => 'Only admin and receptionist can add walk-in patients.',
                 ], 403);
             }
             // $patient = Patient::updateOrCreate(
@@ -133,7 +153,46 @@ class PatientController extends Controller
 
     public function myPatients(Request $request)
     {
-        $patients = Patient::where('user_id', $request->user()->id)->get();
+        // $patients = Patient::where('user_id', $request->user()->id)->get();
+        // return response()->json([
+        //     'status' => true,
+        //     'data' => $patients,
+        // ], 200);
+        $user = $request->user();
+
+        if ($user->hasRole('doctor')) {
+            $doctor = Doctor::where('user_id', $user->id)->firstOrFail();
+
+            $patients = Patient::with('user')
+                ->whereHas('appointments', function ($query) use ($doctor) {
+                    $query->where('doctor_id', $doctor->id);
+                })
+                ->latest()
+                ->get();
+        } else {
+            $patients = Patient::with('user')
+                ->where('user_id', $user->id)
+                ->latest()
+                ->get();
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $patients,
+        ], 200);
+
+    }
+
+    public function doctorPatients(Request $request)
+    {
+        $doctor = Doctor::where('user_id', $request->user()->id)->firstOrFail();
+
+        $patients = Patient::with('user')
+            ->whereHas('appointments', function ($query) use ($doctor) {
+                $query->where('doctor_id', $doctor->id);
+            })
+            ->latest()
+            ->get();
 
         return response()->json([
             'status' => true,

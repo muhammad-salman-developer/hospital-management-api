@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ContactController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\DoctorController;
 use App\Http\Controllers\Api\DoctorSheduleController;
@@ -10,6 +12,7 @@ use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ResendVerificationController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VerifyEmailController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -32,7 +35,7 @@ Route::get('/departments', [DepartmentController::class, 'index']);
 Route::get('/departments/{department}', [DepartmentController::class, 'show']);
 Route::get('/doctor-shedules', [DoctorSheduleController::class, 'index']);
 Route::get('/reviews', [ReviewController::class, 'index']);
-
+Route::post('/contact', [ContactController::class, 'send']);
 // Protected routes (sirf logged-in users)
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -98,6 +101,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::delete('/patients/{patient}', [PatientController::class, 'destroy'])
         ->middleware('permission:patient-delete');
+    Route::get('/doctor/patients', [
+        PatientController::class,
+        'doctorPatients',
+    ]);
 
     // Route::apiResource('appointments', AppointmentController::class)
     //     ->middleware([
@@ -123,6 +130,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy'])
         ->middleware('permission:appointment-delete');
+    Route::get(
+        '/doctor/appointments',
+        [AppointmentController::class, 'doctorAppointments']
+    )->middleware('role:doctor');
+    // payments
     Route::apiResource('payments', PaymentController::class)
         ->middleware([
             'index' => 'permission:payment-view',
@@ -131,8 +143,29 @@ Route::middleware('auth:sanctum')->group(function () {
             'update' => 'permission:payment-update',
             'destroy' => 'permission:payment-delete',
         ]);
-
+    // review
     Route::post('/reviews', [ReviewController::class, 'store']);
     Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])
         ->middleware('permission:review-delete');
+    Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+    Route::get('/dashboard/appointments-trend', [DashboardController::class, 'appointmentsTrend']);
+    Route::get('/dashboard/revenue-trend', [DashboardController::class, 'revenueTrend']);
+    Route::get('/dashboard/todays-appointments', [DashboardController::class, 'todaysAppointments']);
+    // contact
+    Route::get('/contact-messages', [ContactController::class, 'index'])
+        ->middleware('permission:message-view');
+    Route::get('/contact-messages/{id}', [ContactController::class, 'show'])
+        ->middleware('permission:message-view');
+    Route::put('/contact-messages/{id}/status', [ContactController::class, 'updateStatus'])
+        ->middleware('permission:message-update');
+    Route::delete('/contact-messages/{id}', [ContactController::class, 'destroy'])
+        ->middleware('permission:message-delete');
+    Route::apiResource('users', UserController::class)
+        ->except(['show'])
+        ->middleware([
+            'index' => 'permission:user-view',
+            'store' => 'permission:user-add',
+            'update' => 'permission:user-update',
+            'destroy' => 'permission:user-delete',
+        ]);
 });

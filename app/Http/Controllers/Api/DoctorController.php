@@ -40,6 +40,7 @@ class DoctorController extends Controller
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
             ]);
+            // $user->forceFill(['email_verified_at' => now()])->save();
 
             $user->assignRole('doctor');
             $imagePath = null;
@@ -72,7 +73,7 @@ class DoctorController extends Controller
      */
     public function show(string $id)
     {
-        $doctor = Doctor::with(['user','department'])->findOrFail($id);
+        $doctor = Doctor::with(['user', 'department'])->findOrFail($id);
 
         return response()->json([
             'status' => true,

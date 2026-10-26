@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AppointmentRequest;
 use App\Models\Appointment;
+use App\Models\Doctor;
 use Illuminate\Http\Request;
+
 class AppointmentController extends Controller
 {
     /**
@@ -13,12 +15,36 @@ class AppointmentController extends Controller
      */
     public function index()
     {
-        $appointment = Appointment::with(['doctor.user', 'patient', 'schedule'])->latest()->paginate(10);
+        // $appointment = Appointment::with(['doctor.user', 'patient', 'schedule'])->latest()->paginate(10);
+
+        // return response()->json([
+        //     'status' => true,
+        //     'data' => $appointment,
+        // ], 200);
+
+        $user = auth()->user();
+
+        $query = Appointment::with([
+            'doctor.user',
+            'doctor.department',
+            'patient',
+            'schedule',
+        ]);
+
+        // Agar login user Doctor hai
+        if ($user->hasRole('doctor')) {
+            $doctor = Doctor::where('user_id', $user->id)->firstOrFail();
+
+            $query->where('doctor_id', $doctor->id);
+        }
+
+        $appointments = $query->latest()->paginate(10);
 
         return response()->json([
             'status' => true,
-            'data' => $appointment,
+            'data' => $appointments,
         ], 200);
+
     }
 
     /**
@@ -49,13 +75,32 @@ class AppointmentController extends Controller
      */
     public function show(string $id)
     {
-        $appointment = Appointment::with(['doctor.user', 'patient'])->findOrFail($id);
+        // $appointment = Appointment::with(['doctor.user', 'patient'])->findOrFail($id);
+
+        // return response()->json([
+        //     'status' => true,
+        //     'data' => $appointment,
+        // ], 200);
+
+        $user = auth()->user();
+
+        $query = Appointment::with([
+            'doctor.user',
+            'patient',
+            'schedule',
+        ]);
+
+        if ($user->hasRole('doctor')) {
+            $doctor = Doctor::where('user_id', $user->id)->firstOrFail();
+            $query->where('doctor_id', $doctor->id);
+        }
+
+        $appointment = $query->findOrFail($id);
 
         return response()->json([
             'status' => true,
             'data' => $appointment,
         ], 200);
-
     }
 
     /**
@@ -94,6 +139,43 @@ class AppointmentController extends Controller
             ->whereHas('patient', function ($query) use ($request) {
                 $query->where('user_id', $request->user()->id);
             })
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $appointments,
+        ], 200);
+    }
+
+    // public function doctorAppointments(Request $request)
+    // {
+    //     $appointments = Appointment::with([
+    //         'doctor.user',
+    //         'patient',
+    //         'schedule',
+    //     ])
+    //         ->whereHas('doctor', function ($query) use ($request) {
+    //             $query->where('user_id', $request->user()->id);
+    //         })
+    //         ->latest()
+    //         ->get();
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'data' => $appointments,
+    //     ], 200);
+    // }
+    public function doctorAppointments(Request $request)
+    {
+        $doctor = Doctor::where('user_id', $request->user()->id)->firstOrFail();
+
+        $appointments = Appointment::with([
+            'doctor.user',
+            'patient',
+            'schedule',
+        ])
+            ->where('doctor_id', $doctor->id)
             ->latest()
             ->get();
 
